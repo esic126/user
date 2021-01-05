@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="jq.js"></script>
+    <link rel="stylesheet" href="./css/start.css">
+</head>
+
+<body>
+    <div class="wrap" id="wrap">
+        <div class="content" id="content">开始游戏</div>
+    </div>
+    <div class="score">得分<span id="score">0</span></div>
+    <canvas id="canvas"></canvas>
+</body>
+<script>
+    canvas.width = document.documentElement.clientWidth;
+    canvas.height = document.documentElement.clientHeight;
+    $(".content").click(function () {
+        $(".wrap").css("display", "none");
+        animation()
+    })
+    var score = 0;
+    var score1 = 0
+    var timer = null;
+    var timer1 = null;
+    var ctx = canvas.getContext('2d');
+    //右边鱼数组
+    var fishs = [];
+    //右边鱼
+    var fishArr = ["./img/fish1.png", "./img/fish2.png", "./img/fish3.png", "./img/fish4.png", "./img/fish5.png", "./img/fish6.png", "./img/fish7.png", "./img/fish8.png"]
+
+    //从右往左移动的鱼
+    function Fish(src, w) {
+        this.img = new Image();
+        this.img.src = src;
+        this.w = w;
+        this.h = this.w;
+        this.x = canvas.width + this.w;
+        this.y = randNum(0, canvas.height - this.h)
+        //移动的速度
+        this.speedX = randNum(1, 6);
+    }
+    //从右往左鱼的绘制
+    Fish.prototype.draw = function () {
+        ctx.drawImage(this.img, this.x, this.y, this.w, this.h);
+    }
+    // 从右往左鱼的移动
+    Fish.prototype.move = function () {
+        this.x -= this.speedX;
+        if (this.x < -this.w) {
+            this.x = this.y = this.w = this.h = 0;
+        }
+    }
+    timer = setInterval(function () {
+        num = fishArr[randNum(0, fishArr.length - 1)];
+        fishs.push(new Fish(num, randNum(50, 120)))
+    }, 1000)
+    function animation() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var i = 0; i < fishs.length; i++) {
+            fishs[i].draw();
+            fishs[i].move();
+            if (fishs[i].x <= -fishs[i].w) {
+                fishs.splice(i, 1)
+                i--;
+            }
+        }
+        for (var j = 0; j < fishRights.length; j++) {
+            fishRights[j].draw();
+            fishRights[j].move();
+            if (fishRights[j].x >= fishRights[j].w + canvas.width) {
+                fishRights.splice( j, 1)
+                j--;
+            }
+        }
+        Crash.selfAndFish(selfFish, fishs)
+        Crash1.selfAndFish1(selfFish, fishRights)
+        $("#score").text(score1+score)
+        selfFish.draw();
+        selfFish.drag()
+        requestAnimationFrame(animation)
+    }
+    //自己的鱼的属性
+    function SelfFish() {
+        this.img = new Image();
+        this.img.src = "./img/fish.png";
+        this.w = 100;
+        this.h = this.w;
+        this.x = 200;
+        this.y = 200;
+    }
+    //自己鱼的绘制方法
+    SelfFish.prototype.draw = function () {
+        ctx.drawImage(this.img, this.x, this.y, this.w, this.h)
+    }
+    //拖拽
+    SelfFish.prototype.drag = function () {
+        var that = this;
+        canvas.onmousedown = function (e) {
+            var x = e.clientX - this.offsetLeft;
+            var y = e.clientY - this.offsetTop;
+            var res = x >= that.x && x <= that.x + that.w
+            var res1 = y >= that.y && y <= that.y + that.h;
+            if (res && res1) {
+                var in_x = x - that.x;
+                var in_y = y - that.y;
+                this.onmousemove = function (e) {
+                    var nowX = e.clientX - this.offsetLeft
+                    var nowY = e.clientY - this.offsetTop
+                    that.x = nowX - in_x;
+                    that.y = nowY - in_y;
+                    if (that.x <= 0) {
+                        that.x = 0
+                    }
+                    if (that.x >= this.width - that.w) {
+                        that.x = this.width - that.w
+                    }
+                    if (that.y <= 0) {
+                        that.y = 0
+                    }
+                    if (that.y >= this.height - that.h) {
+                        that.y = this.height - that.h
+                    }
+                }
+                this.onmouseup = function () {
+                    this.onmousemove = null;
+                }
+            }
+
+        }
+    }
+    //监测碰撞
+    var Crash = {
+        selfAndFish(selfFish, fishs) {
+            for (var i = 0; i < fishs.length; i++) {
+                if (selfFish.x + selfFish.w >= fishs[i].x && selfFish.x <= fishs[i].x + fishs[i].w && selfFish.y + selfFish.h >= fishs[i].y && selfFish.y <= fishs[i].y + fishs[i].h) {
+                    if (selfFish.w < fishs[i].w) {
+                        Gameover()
+                    }
+                    fishs[i].w = 0;
+                    fishs[i].x = -1;
+                    score++;
+                    console.log(score)
+                }
+            }
+        }
+    }
+    //自己的鱼
+    var selfFish = new SelfFish()
+
+    function Gameover() {
+        alert('游戏结束');
+        fishs = [];
+        timer=null;
+        fishRights = [];
+        timer1=null;
+
+    }
+
+    //从左往右的鱼
+    var fishArr1 = ["./img/fish11.png", "./img/fish12.png", "./img/fish13.png", "./img/fish14.png", "./img/fish15.png", "./img/fish16.png", "./img/fish17.png", "./img/fish18.png"]
+    //从右往左移动的鱼
+    var fishRights = [];
+    function FishRight(src, w) {
+        this.img = new Image();
+        this.img.src = src;
+        this.w = w;
+        this.h = this.w;
+        this.x = -this.w;
+        this.y = randNum(0, canvas.height - this.h)
+        //移动的速度
+        this.speedX = randNum(1, 6);
+    }
+    //从右往左鱼的绘制
+    FishRight.prototype.draw = function () {
+        ctx.drawImage(this.img, this.x, this.y, this.w, this.h);
+    }
+    // 从右往左鱼的移动
+    FishRight.prototype.move = function () {
+        this.x += this.speedX;
+        if (this.x >= this.w + canvas.width) {
+            this.x = this.y = this.w = this.h = 0;
+        }
+    }
+    timer1 = setInterval(function () {
+        num1 = fishArr1[randNum(0, fishArr1.length - 1)];
+        fishRights.push(new FishRight(num1, randNum(50, 120)))
+    }, 1000);
+    var Crash1 = {
+        selfAndFish1(selfFish, fishRights) {
+            for (var i = 0; i < fishRights.length; i++) {
+                if (selfFish.x + selfFish.w >= fishRights[i].x && selfFish.x <= fishRights[i].x + fishRights[i].w && selfFish.y + selfFish.h >= fishRights[i].y && selfFish.y <= fishRights[i].y + fishRights[i].h) {
+                    if (selfFish.w < fishRights[i].w) {
+                        Gameover()
+                    }
+                    fishRights.splice(i,1);
+                    i--;
+                    score1++;
+                    console.log(score1)
+                }
+            }
+        }
+    }
+    function randNum(min, max) {
+        return parseInt(Math.random() * (max - min + 1) + min);
+    }
+</script>
+
+</html>
